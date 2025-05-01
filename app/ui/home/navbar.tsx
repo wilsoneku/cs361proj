@@ -1,14 +1,12 @@
 import Link from 'next/link';
 import NavLinks from '@/app/ui/home/nav-links';
-import AcmeLogo from '@/app/ui/acme-logo';
-import { PowerIcon } from '@heroicons/react/24/outline';
 
 export default function Navbar() {
   return (
     <div className="flex w-full flex-row">
       <Link
         className="flex h-auto items-center bg-blue-600"
-        href="/home"
+        href="/"
       >
         <div className="w-40 pr-2 text-right text-white text-xl">
           <p>OSRS tools</p>

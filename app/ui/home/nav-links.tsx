@@ -9,9 +9,9 @@ import Link from 'next/link';
 // Map of links to display in the side navigation.
 // Depending on the size of the application, this would be stored in a database.
 const links = [
-  { name: 'Market', href: '/home/market', icon: CircleStackIcon },
-  { name: 'Skills', href: '/home/skills', icon: BookOpenIcon },
-  { name: 'Calculators', href: '/home/calculators', icon: CalculatorIcon },
+  { name: 'Market', href: '/market', icon: CircleStackIcon },
+  { name: 'Skills', href: '/skills', icon: BookOpenIcon },
+  { name: 'Calculators', href: '/calculators', icon: CalculatorIcon },
 ];
 
 export default function NavLinks() {
