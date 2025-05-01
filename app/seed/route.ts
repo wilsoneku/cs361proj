@@ -4,20 +4,25 @@ import {crafting_table} from '../lib/placeholder-data';
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 async function seedCraftingTable() {
-  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
   await sql`
-    CREATE TABLE IF NOT EXISTS users (
-      id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL
+    CREATE TABLE IF NOT EXISTS crafting_methods (
+      id INT NOT NULL PRIMARY KEY,
+      lvl INT NOT NULL,
+      product VARCHAR(255) NOT NULL,
+      exp NUMERIC NOT NULL,
+      exp_rate NUMERIC NOT NULL,
+      required_materials TEXT NOT NULL,
+      cost NUMERIC NOT NULL,
+      price NUMERIC NOT NULL,
+      profit NUMERIC NOT NULL,
+      profit_rate NUMERIC NOT NULL
     );
   `;
 
   const insertedCraftingMethods = await Promise.all(
       crafting_table.map(async (crafting_table) => {
       return sql`
-        INSERT INTO users (id, lvl, product, exp, exp_rate, required_materials, cost, price, profit, profit_rate)
+        INSERT INTO crafting_methods (id, lvl, product, exp, exp_rate, required_materials, cost, price, profit, profit_rate)
         VALUES (${crafting_table.id}, ${crafting_table.lvl}, ${crafting_table.product}, ${crafting_table.exp}, 
                 ${crafting_table.exp_rate}, ${crafting_table.required_materials}, ${crafting_table.cost}, 
                 ${crafting_table.price}, ${crafting_table.profit}, ${crafting_table.profit_rate})

@@ -9,7 +9,8 @@
 //   password: string;
 // };
 
-export type CraftingTable = {
+export type crafting_methods = {
+  id: number
   lvl: number;
   product: string;
   exp: number;

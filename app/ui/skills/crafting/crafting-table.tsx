@@ -1,4 +1,12 @@
-export default function CraftingTable() {
+import {fetchCraftingMethods} from "@/app/lib/data";
+import Image from "next/image";
+import {formatCurrency, formatDateToLocal} from "@/app/lib/utils";
+import InvoiceStatus from "@/app/ui/invoices/status";
+import {DeleteInvoice, UpdateInvoice} from "@/app/ui/invoices/buttons";
+
+export default async function CraftingTable() {
+    const craftingMethods = await fetchCraftingMethods();
+
     return (
         <div className="mt-6 flow-root">
             <div className="inline-block min-w-full align-middle">
@@ -36,7 +44,41 @@ export default function CraftingTable() {
                         </tr>
                         </thead>
                         <tbody className="bg-white">
+                        {craftingMethods?.map((method) => (
+                            <tr
+                                key={method.id}
+                                className="w-full border-b py-3 text-sm last-of-type:border-none [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
+                            >
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.lvl}
+                                </td>
 
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.product}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.exp}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.exp_rate}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.required_materials}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.cost}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.price}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.profit}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-3">
+                                    {method.profit_rate}
+                                </td>
+                            </tr>
+                        ))}
                         </tbody>
                     </table>
                 </div>
