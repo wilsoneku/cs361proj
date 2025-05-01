@@ -2,7 +2,6 @@ import postgres from 'postgres';
 import {
   crafting_methods
 } from './definitions';
-import { formatCurrency } from './utils';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 

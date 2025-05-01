@@ -1,8 +1,4 @@
 import {fetchCraftingMethods} from "@/app/lib/data";
-import Image from "next/image";
-import {formatCurrency, formatDateToLocal} from "@/app/lib/utils";
-import InvoiceStatus from "@/app/ui/invoices/status";
-import {DeleteInvoice, UpdateInvoice} from "@/app/ui/invoices/buttons";
 
 export default async function CraftingTable() {
     const craftingMethods = await fetchCraftingMethods();
