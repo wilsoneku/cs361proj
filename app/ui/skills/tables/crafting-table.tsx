@@ -20,53 +20,64 @@ interface CraftingItem {
 }
 
 const loadingTable = (
-    <div className="w-full max-w-7xl mx-auto px-4 mt-12 rounded-lg bg-gray-50 p-2">
-        <table className="hidden min-w-full text-gray-900 md:table">
-            <thead className="rounded-lg text-left text-sm font-normal">
-            <tr className="items-center justify-center">
-                <th scope="col" className="px-4 py-5 font-medium pl-6">
-                    Fav
-                </th>
-                <th scope="col" className="px-4 py-5 font-medium pl-6">
-                    Lvl
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium">
-                    Product
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium">
-                    Exp
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium">
-                    Exp/hr
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium w-56">
-                    Required Materials
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium">
-                    Cost
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium">
-                    Price
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium">
-                    Profit
-                </th>
-                <th scope="col" className="px-3 py-5 font-medium">
-                    Profit/hr
-                </th>
-            </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-                <tr
-                    className="w-full border-b py-3 text-sm last-of-type:border-none"
-                >
-                    <td className="px-4 py-2">
-                        <StarIcon className="h-5 w-5" />
-                    </td>
-                    <td className="px-4 py-2 justify-center col-span-9"> Loading </td>
+    <div className="">
+        <div className="mb-4 flex justify-between items-center">
+            <button
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200"
+            >
+                <StarIcon className="h-5 w-5" />
+                Show Favorites
+            </button>
+        </div>
+
+        <div className="flow-root min-w-full align-middle rounded-lg bg-gray-50 p-2">
+            <table className="text-gray-900">
+                <thead className="rounded-lg text-left text-sm font-normal">
+                <tr className="items-center justify-center">
+                    <th scope="col" className="px-4 py-5 font-medium pl-6">
+                        Fav
+                    </th>
+                    <th scope="col" className="px-4 py-5 font-medium pl-6">
+                        Lvl
+                    </th>
+                    <th scope="col" className="px-3 py-5 font-medium">
+                        Product
+                    </th>
+                    <th scope="col" className="px-3 py-5 font-medium">
+                        Exp
+                    </th>
+                    <th scope="col" className="px-3 py-5 font-medium">
+                        Exp/hr
+                    </th>
+                    <th scope="col" className="px-3 py-5 font-medium w-56">
+                        Required Materials
+                    </th>
+                    <th scope="col" className="px-3 py-5 font-medium">
+                        Cost
+                    </th>
+                    <th scope="col" className="px-3 py-5 font-medium">
+                        Price
+                    </th>
+                    <th scope="col" className="px-3 py-5 font-medium">
+                        Profit
+                    </th>
+                    <th scope="col" className="px-3 py-5 font-medium">
+                        Profit/hr
+                    </th>
                 </tr>
-            </tbody>
-        </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                    <tr
+                        className="w-full border-b py-3 text-sm last-of-type:border-none"
+                    >
+                        <td className="px-4 py-2">
+                                    <StarIcon className="h-5 w-5" />
+                        </td>
+                        <td className="px-4 py-2">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 )
 
@@ -122,7 +133,7 @@ export default function CraftingTable() {
     }
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4">
+        <div className="">
             <div className="mb-4 flex justify-between items-center">
                 <button
                     onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
@@ -137,8 +148,8 @@ export default function CraftingTable() {
                 </button>
             </div>
 
-            <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-                <table className="hidden min-w-full text-gray-900 md:table">
+            <div className="flow-root min-w-full align-middle rounded-lg bg-gray-50 p-2">
+                <table className="text-gray-900">
                     <thead className="rounded-lg text-left text-sm font-normal">
                         <tr className="items-center justify-center">
                             <th scope="col" className="px-4 py-5 font-medium pl-6">
