@@ -29,6 +29,7 @@ function getSkillData(data: any, skill:any) {
         // Check if the data has the expected structure
         if (jsonData && jsonData.skills) {
             // Look specifically for the Crafting skill
+            // console.log(skill)
             const selectedSkill = jsonData.skills.find((skill: any) =>
                 skill && skill.name === 'Crafting'
             );
@@ -48,9 +49,8 @@ function getSkillData(data: any, skill:any) {
 
 export async function submitUsername(prevData:any, formData: FormData) {
     const username = formData.get("user")
-    const skill = formData.get("id")
-    console.log(username)
-
+    const skill = formData.get("skill")
+    console.log(username, skill)
     const data = await sendRsn(username)
 
     return getSkillData(data, skill)

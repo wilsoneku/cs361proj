@@ -11,17 +11,16 @@ export default function Page() {
                 <img
                  src="/icons/Crafting_icon.png"
                  alt={"tables icon"}
-                 className=""
                 />
                 <h2 className="text-3xl font-bold">
                     Crafting
                 </h2>
 
             </div>
-            <UserSearch />
-            <Suspense fallback={<CraftingTableSkeleton />}>
-                <CraftingTable />
-            </Suspense>
+
+            <UserSearch skill='Crafting'/>
+            <CraftingTable />
+
         </div>
 
     );

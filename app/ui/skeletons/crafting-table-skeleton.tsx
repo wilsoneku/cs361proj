@@ -36,9 +36,21 @@ export default async function CraftingTableSkeleton() {
                         </tr>
                         </thead>
                         <tbody className="bg-white">
-
+                            <tr
+                                className="w-full border-b py-3 text-sm last-of-type:border-none"
+                            >
+                                <td align='center'> LOADING </td>
+                                <td align='center'> LOADING </td>
+                                <td align='center'> LOADING </td>
+                                <td align='center'> LOADING </td>
+                                <td align='center'> LOADING </td>
+                                <td align='center'> LOADING </td>
+                                <td align='center'> LOADING </td>
+                                <td align='center'> LOADING </td>
+                            </tr>
                         </tbody>
                     </table>
+
                 </div>
             </div>
         </div>

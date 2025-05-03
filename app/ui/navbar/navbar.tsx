@@ -3,7 +3,7 @@ import NavLinks from '@/app/ui/navbar/nav-links';
 
 export default function Navbar() {
   return (
-    <div className="flex flex-row w-full h-[55px] ">
+    <div className="flex flex-row w-full h-[55px] bg-gray-50 ">
       <Link
         className="flex h-auto items-center bg-gray-500"
         href="/"

@@ -23,7 +23,7 @@ export default function NavLinks() {
           <Link
             key={link.name}
             href={link.href}
-            className="flex  items-center justify-center gap-2 bg-gray-50 p-3 text-sm font-medium hover:bg-gray-300 md:flex-none md:justify-start md:p-2 md:px-3"
+            className="flex  items-center justify-center gap-2  p-3 text-sm font-medium hover:bg-gray-300 md:flex-none md:justify-start md:p-2 md:px-3"
           >
             <LinkIcon className="w-6" />
             <p className="hidden md:block">{link.name}</p>
