@@ -1,10 +1,9 @@
 'use client'
-// import {fetchCraftingMethods} from "@/app/lib/data";
 import {getCraftingMethods} from "@/app/ui/skills/tables/get-crafting-methods";
 import {useState, useEffect} from "react";
 import { StarIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
-import CraftingTableSkeleton from "@/app/ui/skeletons/crafting-table-skeleton";
+import {PriceWarning} from "@/app/ui/skills/price-warning";
 
 interface CraftingItem {
     id: number;
@@ -28,6 +27,7 @@ const loadingTable = (
                 <StarIcon className="h-5 w-5" />
                 Show Favorites
             </button>
+
         </div>
 
         <div className="flow-root min-w-full align-middle rounded-lg bg-gray-50 p-2">
@@ -87,7 +87,7 @@ export default function CraftingTable() {
     const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Fetch data when component mounts
+    // Fetch data when the component mounts
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -99,7 +99,6 @@ export default function CraftingTable() {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, []);
 
@@ -146,6 +145,7 @@ export default function CraftingTable() {
                     )}
                     {showOnlyFavorites ? 'Show All' : 'Show Favorites'}
                 </button>
+                <PriceWarning />
             </div>
 
             <div className="flow-root min-w-full align-middle rounded-lg bg-gray-50 p-2">

@@ -20,7 +20,6 @@ export default function Page() {
 
             <UserSearch skill='Crafting'/>
             <CraftingTable />
-
         </div>
 
     );
