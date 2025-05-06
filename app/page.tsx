@@ -10,7 +10,7 @@ export default function Page() {
 
         {/*TITLE / INFO TEXT*/}
         <div className="flex flex-col gap-4">
-          <div className={'${osrsFont.className} text-4xl font-bold'}>
+          <div className={'text-4xl font-bold'}>
             OSRS Tools
           </div>
           <div className="text-xl">

@@ -3,7 +3,7 @@ import {getCraftingMethods} from "@/app/ui/skills/tables/get-crafting-methods";
 import {useState, useEffect} from "react";
 import { StarIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
-import {PriceWarning} from "@/app/ui/skills/price-warning";
+import {PriceWarning} from "@/app/ui/skills/tables/price-warning";
 
 interface CraftingItem {
     id: number;

@@ -11,17 +11,13 @@ export const PriceWarning = () => {
             onMouseEnter={() => setIsExpanded(true)}
             onMouseLeave={() => setIsExpanded(false)}
         >
-            <div className="text-amber-500 cursor-help">
-                <ExclamationTriangleIcon className="h-5 w-5" />
-            </div>
-
             <div
                 className={`
-          absolute left-6 top-1/2 -translate-y-1/2
+          absolute right-6 top-1/2 -translate-y-1/2
           bg-amber-50 border border-amber-200 rounded-lg shadow-lg
           p-3 text-sm text-amber-700
           transition-all duration-300 ease-in-out
-          ${isExpanded ? 'opacity-100 w-64 translate-x-0' : 'opacity-0 w-0 -translate-x-4 pointer-events-none'}
+          ${isExpanded ? 'opacity-100 w-64 translate-x-0' : 'opacity-0 w-0 translate-x-4 pointer-events-none'}
         `}
             >
                 <p className="whitespace-normal">
@@ -29,6 +25,11 @@ export const PriceWarning = () => {
                     Always verify the live prices in-game before making any large purchases decisions.
                 </p>
             </div>
+
+            <div className="text-amber-500 cursor-help">
+                <ExclamationTriangleIcon className="h-5 w-5" />
+            </div>
+
         </div>
     );
 };
