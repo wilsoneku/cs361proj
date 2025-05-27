@@ -20,6 +20,7 @@ export type crafting_methods = {
   price: number;
   profit: number;
   profit_rate: number;
+  ingredients: Record<string, any>;
 };
 
 export type Customer = {

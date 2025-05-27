@@ -8,16 +8,23 @@ interface SkillInfo {
 type SearchResult = [string | null, string | null, SkillInfo | null];
 
 async function getData(rsn:string) {
-    const url = 'https://secure.runescape.com/m=hiscore_oldschool/index_lite.json?player='
-
+    const url = 'http://localhost:8002/fetch-hiscores/'
+    const payload = {'player_name': rsn}
     try {
-        console.log(url + rsn)
-        const response = await fetch(url + rsn);
+        console.log('Fetching data for:', rsn)
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
         if (!response.ok) {
             throw new Error(`Response status: ${response.status}`);
         }
 
-        return await response.json();
+        const text = await response.text();
+        return JSON.parse(text);
 
     } catch (error: any) {
         console.error(error.message);
@@ -27,12 +34,29 @@ async function getData(rsn:string) {
 
 function getSkillInfo(data: any, skill:string) {
     try {
-        if (!data?.skills) return null;
-        // Case-insensitive match
-        const found = data.skills.find(
+        // Early return if no data or hiscores or skills array
+        if (!data?.hiscores?.skills) {
+            console.log('No hiscores data found');
+            return null;
+        }
+
+        console.log('Looking for skill:', skill);
+
+        // Case-insensitive match for the skill
+        const found = data.hiscores.skills.find(
             (s: any) => s.name.toLowerCase() === skill.toLowerCase()
         );
-        return found ? { level: found.level, xp: found.xp } : null;
+        console.log('Found skill data:', found);
+
+        if (found && typeof found.level === 'number' && typeof found.xp === 'number') {
+            return {
+                level: found.level,
+                xp: found.xp
+            };
+        }
+
+        console.log('Skill not found or invalid data');
+        return null;
 
     } catch (error) {
         console.error('Error processing data:', error);

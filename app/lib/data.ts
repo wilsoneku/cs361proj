@@ -12,14 +12,13 @@ export async function fetchCraftingMethods() {
 
     // console.log('Fetching revenue data...');
     // await new Promise((resolve) => setTimeout(resolve, 3000));
-
     const data = await sql<crafting_methods[]>`
         SELECT * FROM crafting_methods
         ORDER BY crafting_methods.lvl ASC`;
 
     // console.log('Data fetch completed after 3 seconds.');
-
     return data;
+
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch crafting_methods.');

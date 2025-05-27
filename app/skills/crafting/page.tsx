@@ -19,7 +19,6 @@ export default function Page() {
             </div>
 
             <UserSearch skill='Crafting'/>
-            <CraftingTable />
         </div>
 
     );

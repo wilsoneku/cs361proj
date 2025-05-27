@@ -1,5 +1,4 @@
 'use client'
-import {submitUsername} from "@/app/ui/user-search/user-search-actions";
 import {altUserSearchActions} from "@/app/ui/user-search/alt-user-search-actions";
 import {useActionState} from "react";
 import Form from 'next/form'
@@ -45,7 +44,7 @@ export default function UserSearch({skill}: UserSearchProps) {
                         {isLoading ? "Fetching..." : "Submit"} </button>
                 </div>
             </Form>
-            {/*<DisplayXp data={replyData} />*/}
+            <DisplayXp data={replyData} />
         </div>
 
     );
