@@ -1,8 +1,4 @@
-import CraftingTable from "@/app/ui/skills/tables/crafting-table";
 import UserSearch from "@/app/ui/user-search/user-search";
-import CraftingTableSkeleton from "@/app/ui/skeletons/crafting-table-skeleton";
-import {Suspense} from "react";
-
 
 export default function Page() {
     return (

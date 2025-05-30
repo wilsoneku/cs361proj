@@ -1,6 +1,6 @@
 'use client'
 import {altUserSearchActions} from "@/app/ui/user-search/alt-user-search-actions";
-import {useActionState} from "react";
+import {useActionState, useState} from "react";
 import Form from 'next/form'
 import DisplayXp from "@/app/ui/user-search/display-xp";
 

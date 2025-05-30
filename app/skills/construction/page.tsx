@@ -1,4 +1,4 @@
-import CraftingTable from "@/app/ui/skills/tables/crafting-table";
+import CraftingTable from "@/app/ui/skills/crafting/crafting-table";
 
 export default function Page() {
     return (

@@ -1,5 +1,4 @@
 'use server';
-import zmq from 'zeromq';
 
 type ItemInfo = {
     itemid: string;
@@ -14,60 +13,112 @@ type SearchData = {
     itemID: string | null;
     info: ItemInfo | null;
     error?: string;
+    timing?: TimingInfo;
 };
 
-export interface SimpleResponse {
-    cost: number | null;
-    price: number | null;
-    profit: number | null;
-    profit_hr: number | null;
-    ingredients_cost: number | null;
-    ingredients_data: Record<string, any> | null;
-    full_item_cost: number | null;
+interface TimingInfo {
+    total_time: number;
+    api_call_time: number;
+    processing_time: number;
+    function_name: string;
 }
 
-interface CraftingItem {
-    id: number;
-    lvl: number;
-    product: string;
-    exp: number;
-    exp_rate: number;
-    ingredients: Record<string, any>;
-    required_materials: string;
-    cost?: number;
-    price?: number;
-    profit?: number;
-    profit_rate?: number;
-    xpNeeded?: number;
-}
-
-async function sendItemId(itemID:any) {
+async function getData(itemid:any) {
+    const functionStart = performance.now();
+    const url = 'http://localhost:8001/market-data/'
+    const payload = {'itemid': itemid}
+    console.log('payload: ' + payload)
     try {
-        const sock = new zmq.Request();
-        sock.connect("tcp://localhost:8001")
-        console.log('Connected to port 8001')
+        const apiCallStart = performance.now();
 
-        const payload = {'itemid': itemID}
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
 
-        await sock.send(JSON.stringify(payload))
+        const text = await response.text();
+        const apiCallEnd = performance.now();
+        const apiCallTime = apiCallEnd - apiCallStart;
 
-        const result = await sock.receive()
-        const jsonData = JSON.parse(result.toString())
-        console.log(jsonData)
+        // Time the JSON parsing
+        const processingStart = performance.now();
+        const data = JSON.parse(text);
+        const processingEnd = performance.now();
+        const processingTime = processingEnd - processingStart;
 
-        return jsonData
+        const functionEnd = performance.now();
+        const totalTime = functionEnd - functionStart;
 
-    }
-    catch (error) {
-        console.error("Error:", error);
-        throw error;
+        const timing: TimingInfo = {
+            total_time: Math.round(totalTime * 100) / 100,
+            api_call_time: Math.round(apiCallTime * 100) / 100,
+            processing_time: Math.round(processingTime * 100) / 100,
+            function_name: 'getData'
+        };
+
+        console.log(`getData timing for item ${itemid}:`, timing);
+        console.log(`API call: ${timing.api_call_time}ms`);
+        console.log(`Processing: ${timing.processing_time}ms`);
+        console.log(`Total: ${timing.total_time}ms`);
+
+        return { data, timing };
+
+    } catch (error: any) {
+        const functionEnd = performance.now();
+        const totalTime = functionEnd - functionStart;
+
+        const timing: TimingInfo = {
+            total_time: Math.round(totalTime * 100) / 100,
+            api_call_time: 0,
+            processing_time: 0,
+            function_name: 'getData_error'
+        };
+        console.error(`getData error after ${timing.total_time}ms:`, error.message);
+        return { data: null, timing };
     }
 }
 
-function getItemInfo(data: any, itemId: string | number) {
+async function getItemDetails(itemid:any) {
+    const url = 'http://localhost:8001/item-details/'
+    const payload = {'itemid': itemid}
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+        return await response.json();
+    }
+    catch {
+        console.log('Error getting item details')
+        return null;
+    }
+}
+
+function parseData(data: any, details:any, itemId: string | number) {
+    const processingStart = performance.now();
+
     try {
         // Early return if no data array
         if (!data?.data) {
+            console.log('No item data found');
+            return null;
+        }
+
+        //Early return if no details array
+        if (!details?.item) {
             console.log('No item data found');
             return null;
         }
@@ -80,145 +131,104 @@ function getItemInfo(data: any, itemId: string | number) {
             typeof itemData.high === 'number' &&
             typeof itemData.low === 'number'
         ) {
-            return {
+            const result = {
                 itemid: idStr,
                 high: itemData.high,
                 highTime: itemData.highTime,
                 low: itemData.low,
                 lowTime: itemData.lowTime,
-                average: itemData.average
-            };
+                average: itemData.average,
+                details: details,
+            }
+            const processingEnd = performance.now();
+            const processingTime = processingEnd - processingStart;
+            console.log(`parseData processing: ${Math.round(processingTime * 100) / 100}ms`);
+
+            return result;
         }
         console.log('Item not found or invalid data');
         return null;
 
     } catch (error) {
-        console.error('Error processing data:', error);
+        const processingEnd = performance.now();
+        const processingTime = processingEnd - processingStart;
+        console.error(`parseData error after ${Math.round(processingTime * 100) / 100}ms:`, error);
         return null;
     }
 
 }
 
+
 export async function submitItemID(
     prevState: SearchData,
     payload: FormData
 ): Promise<SearchData> {
+    const functionStart = performance.now();
+
     try {
-        // Debug: Log all form data
         console.log('Form data entries:');
         for (const [key, value] of payload.entries()) {
             console.log(`${key}: ${value}`);
         }
 
-        // extract itemID from received form
+        // extract itemID from  form
         const itemID = payload.get("itemID");
         console.log('Extracted itemID:', itemID);
         if (!itemID) {
             return { itemID: null, info: null, error: "No item ID provided" };
         }
 
-        // fetch live item data from API
-        const data = await sendItemId(itemID);
+        // Time the API call
+        const { data, timing: apiTiming } = await getData(itemID);
+        const details = await getItemDetails(itemID);
+
         // repackage data
-        const itemInfo = getItemInfo(data, itemID.toString());
+        const processingStart = performance.now();
+        const itemInfo = parseData(data, details, itemID.toString());
+        const processingEnd = performance.now();
+        const localProcessingTime = processingEnd - processingStart;
+
+        const functionEnd = performance.now();
+        const totalTime = functionEnd - functionStart;
+
+        const overallTiming: TimingInfo = {
+            total_time: Math.round(totalTime * 100) / 100,
+            api_call_time: apiTiming.api_call_time,
+            processing_time: Math.round((apiTiming.processing_time + localProcessingTime) * 100) / 100,
+            function_name: 'submitItemID'
+        };
+        console.log(`submitItemID complete timing:`, overallTiming);
 
         if (!itemInfo) {
             return {
                 itemID: itemID.toString(),
                 info: null,
-                error: "Item not found"
+                error: "Item not found",
+                timing: overallTiming
             };
         }
+        return {
+            itemID: itemID.toString(),
+            info: itemInfo,
+            timing: overallTiming
+        };
 
-        return { itemID: itemID.toString(), info: itemInfo };
     } catch (error) {
-        console.error(error);
+        const functionEnd = performance.now();
+        const totalTime = functionEnd - functionStart;
+
+        console.error(`submitItemID error after ${Math.round(totalTime * 100) / 100}ms:`, error);
+
         return {
             itemID: null,
             info: null,
-            error: error instanceof Error ? error.message : "Unknown error"
-        };
-    }
-}
-
-export async function fetchItemPrice(itemId: string | number): Promise<ItemInfo | null> {
-    try {
-        const data = await sendItemId(itemId);
-        return getItemInfo(data, itemId);
-    } catch (error) {
-        console.error('Error fetching item price:', error);
-        return null;
-    }
-}
-
-// Helper function to parse ingredients
-function parseIngredients(ingredients: any): Record<string, number> {
-    if (typeof ingredients === 'object' && ingredients !== null) {
-        return ingredients;  // Already an object
-    }
-
-    if (typeof ingredients === 'string') {
-        try {
-            //Try direct JSON parse after cleaning
-            const cleaned = ingredients
-                .replace(/'/g, '"')  // Replace single quotes
-                .replace(/(\w+):/g, '"$1":')  // Quote keys
-                .replace(/([{,]\s*)(\w+):/g, '$1"$2":');  // Ensure all keys are quoted
-
-            return JSON.parse(cleaned);
-        } catch (e) {
-            const result: Record<string, number> = {};
-            const pairs = ingredients
-                .replace(/[{}]/g, '')  // Remove braces
-                .split(',')  // Split by comma
-                .map(pair => pair.trim());
-
-            pairs.forEach(pair => {
-                const [key, value] = pair.split(':').map(s => s.trim());
-                if (key && value) {
-                    result[key] = parseInt(value) || 0;
-                }
-            });
-
-            return result;
-        }
-    }
-
-    return {};
-}
-
-export async function fetchSimpleResponse(item: CraftingItem): Promise<SimpleResponse | null> {
-    try {
-        const payload = {
-            item_data: {
-                item_id: item.id,
-                exp: parseInt(item.exp.toString()),
-                exp_hr: parseInt(item.exp_rate.toString()),
-                ingredients: parseIngredients(item.ingredients),  // Use the parser
-                cost: item.cost,
-                price: item.price,
-                profit: item.profit,
-                profit_hr: item.profit_rate,
+            error: error instanceof Error ? error.message : "Unknown error",
+            timing: {
+                total_time: Math.round(totalTime * 100) / 100,
+                api_call_time: 0,
+                processing_time: 0,
+                function_name: 'submitItemID_error'
             }
         };
-
-        console.log(`Sending request for item ${item.id}:`, payload);
-
-        const response = await fetch('http://localhost:8000/calculate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error(`Error fetching simple response for item ${item.id}:`, error);
-        return null;
     }
 }

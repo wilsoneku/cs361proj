@@ -8,8 +8,9 @@ interface SkillInfo {
 type SearchResult = [string | null, string | null, SkillInfo | null];
 
 async function getData(rsn:string) {
-    const url = 'http://localhost:8002/fetch-hiscores/'
+    const url = 'http://localhost:8000/fetch-hiscores/'
     const payload = {'player_name': rsn}
+    console.log('payload: ' + payload)
     try {
         console.log('Fetching data for:', rsn)
         const response = await fetch(url, {
@@ -17,7 +18,8 @@ async function getData(rsn:string) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(3000)
         });
         if (!response.ok) {
             throw new Error(`Response status: ${response.status}`);

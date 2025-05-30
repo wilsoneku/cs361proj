@@ -1,28 +1,43 @@
+'use server'
+
 import postgres from 'postgres';
 import {
-  crafting_methods
+  crafting_methods,
+  custom_calculations
 } from './definitions';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export async function fetchCraftingMethods() {
-  try {
-    // Artificially delay a response for demo purposes.
-    // Don't do this in production :)
 
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
-    const data = await sql<crafting_methods[]>`
-        SELECT * FROM crafting_methods
+  try {
+    console.log('Fetching crafting data...');
+
+    const crafting_data = await sql<crafting_methods[]>`
+        SELECT id, lvl, product, exp, exp_rate, ingredients FROM crafting_methods
         ORDER BY crafting_methods.lvl ASC`;
 
-    // console.log('Data fetch completed after 3 seconds.');
-    return data;
+    console.log('Fetched crafting data: ', crafting_data);
+    return crafting_data;
 
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch crafting_methods.');
   }
+}
+
+export async function fetchCustomCalculations() {
+ try {
+   const calculation_data = await sql<custom_calculations[]>`
+      SELECT * FROM custom_calculations
+      ORDER BY custom_calculations.id ASC`;
+
+   return calculation_data;
+ }
+ catch (error) {
+   console.error('Database Error:', error);
+   throw new Error('Failed to fetch crafting_methods.');
+ }
 }
 
 // export async function fetchLatestInvoices() {

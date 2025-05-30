@@ -15,13 +15,15 @@ export type crafting_methods = {
   product: string;
   exp: number;
   exp_rate: number;
-  required_materials: string;
-  cost: number;
-  price: number;
-  profit: number;
-  profit_rate: number;
   ingredients: Record<string, any>;
 };
+
+export type custom_calculations = {
+  id: number;
+  inputs: Record<string, any>;
+  outputs: Record<string, any>;
+
+}
 
 export type Customer = {
   id: string;

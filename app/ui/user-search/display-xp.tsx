@@ -1,9 +1,8 @@
 'use client'
 
-import Form from "next/form";
 import xpTable from "@/app/ui/user-search/xp-table";
 import React, {useState, useEffect} from "react";
-import CraftingTable from "@/app/ui/skills/tables/crafting-table";
+import CraftingTable from "@/app/ui/skills/crafting/crafting-table";
 
 interface skillInfo {
     level: number;
@@ -18,6 +17,8 @@ export default function DisplayXp({data}: DisplayXpProps) {
     const [username, returnedSkill, skillInfo] = data ?? [null, null, null];
     const [currentLevel, setCurrentLevel] = useState('');
     const [targetLevel, setTargetLevel] = useState('');
+    const [xpNeeded, setXpNeeded] = useState<number | undefined>();
+    const [resetKey, setResetKey] = useState(0);
 
     // Update currentLevel when microservice data is received
     useEffect(() => {
@@ -25,6 +26,7 @@ export default function DisplayXp({data}: DisplayXpProps) {
             setCurrentLevel(skillInfo.level.toString());
         }
     }, [skillInfo]);
+
 
     const handleLevelChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (value: string) => void) => {
         const value = e.target.value;
@@ -38,12 +40,7 @@ export default function DisplayXp({data}: DisplayXpProps) {
     const targetLevelNum = parseInt(targetLevel || '0');
     const targetXp = xpTable.get(targetLevelNum) ?? 0;
 
-    const calculateXpDifference = () => {
-        if (!targetLevel || targetLevelNum < currentLevelNum) return null;
-        return targetXp - currentXp;
-    };
-
-    const xpDifference = calculateXpDifference();
+    const xpDifference = targetXp - currentXp;
 
     return (
         <div className="flex flex-col gap-2 items-center mt-4">
@@ -93,7 +90,9 @@ export default function DisplayXp({data}: DisplayXpProps) {
                     <p><strong>Xp Needed:</strong> {xpDifference.toLocaleString()}</p>
                 )}
             </div>
-            <CraftingTable xpNeeded={xpDifference as number}/>
+            <CraftingTable
+                xpNeeded={xpDifference > 0 ? xpDifference : undefined}
+            />
         </div>
     );
 }
