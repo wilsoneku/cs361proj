@@ -68,7 +68,7 @@ function getSkillInfo(data: any, skill:string) {
 }
 
 
-export async function altUserSearchActions(prevData:any, formData: FormData): Promise<SearchResult>
+export async function userSearchActions(prevData:any, formData: FormData): Promise<SearchResult>
 {
     const username = formData.get("user")
     const skill = formData.get("skill")

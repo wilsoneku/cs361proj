@@ -2,7 +2,7 @@
 'use client'
 
 import React from 'react';
-import {ItemInfo} from "@/app/market/page";
+import {ItemInfo} from "@/app/lib/types";
 
 interface ItemDisplayProps {
     itemInfo: ItemInfo | null;
@@ -151,7 +151,9 @@ export default function ItemDisplay({ itemInfo, itemId }: ItemDisplayProps) {
                     <div className="space-y-4">
                         <div className="flex justify-between">
                             <span className="text-slate-800 font-semibold mb-1">Buy limit:</span>
-                            <span className="text-slate-600">Unknown</span>
+                            <span className="text-slate-600">
+                                {itemInfo.buylimit ? itemInfo.buylimit.toLocaleString().split('.')[0] : 'Unknown'}
+                            </span>
                         </div>
                         <div>
                             <h3 className="text-slate-800 font-semibold mb-1">Daily volume:</h3>
@@ -182,11 +184,15 @@ export default function ItemDisplay({ itemInfo, itemId }: ItemDisplayProps) {
                         <div className="space-y-3">
                             <div className="flex justify-between">
                                 <span className="text-slate-800">High alch:</span>
-                                <span className="text-slate-600">Unknown</span>
+                                <span className="text-slate-600">
+                                    {itemInfo.buylimit ? itemInfo.highalch?.toLocaleString().split('.')[0] : 'Unknown'} gp
+                                </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-slate-800">Low alch:</span>
-                                <span className="text-slate-600">Unknown</span>
+                                <span className="text-slate-600">
+                                    {itemInfo.buylimit ? itemInfo.lowalch?.toLocaleString().split('.')[0] : 'Unknown'} gp
+                                </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-slate-800">Members:</span>
@@ -196,12 +202,12 @@ export default function ItemDisplay({ itemInfo, itemId }: ItemDisplayProps) {
                                     </span>
                                 ) : (
                                     <span className="text-slate-600 text-sm font-medium">
-                                        Free-to-Play
+                                        ❌ Free-to-Play
                                     </span>
                                 )}
                             </div>
                             <div>
-                                <span className="text-slate-800 font-semibold">Examine Text:</span>
+                                <span className="text-slate-800">Examine Text:</span>
                                 <p className="text-slate-600 text-sm mt-1">
                                     {item.description}
                                 </p>

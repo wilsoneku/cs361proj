@@ -8,7 +8,7 @@ const links1 = [
 ];
 
 const links2 = [
-    { name: 'Herblore', href: 'skills/herbalore', icon: '/icons/Herblore_icon.png'},
+    { name: 'Herblore', href: 'skills/herblore', icon: '/icons/Herblore_icon.png'},
     { name: 'Crafting', href: 'skills/crafting', icon: '/icons/Crafting_icon.png'},
     { name: 'Fletching', href: 'skills/fletching', icon: '/icons/Fletching_icon.png'},
 

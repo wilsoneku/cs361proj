@@ -3,10 +3,11 @@ import {useState} from "react";
 
 import UserSearch from "@/app/ui/user-search/user-search";
 import DisplayXp from "@/app/ui/user-search/display-xp";
-import CraftingTable from "@/app/ui/skills/tables/crafting-table";
 
-import {SkillInfo} from "@/app/lib/types"
-
+export interface SkillInfo {
+    level: number;
+    xp: number;
+}
 
 export default function Page() {
     const [xpNeeded, setXpNeeded] = useState<number>();
@@ -20,24 +21,23 @@ export default function Page() {
         <div className="flex flex-col items-center justify-center mt-4">
             <div className="flex flex-row items-center gap-2 ">
                 <img
-                 src="/icons/Crafting_icon.png"
-                 alt={"tables icon"}
+                    src="/icons/Prayer_icon.png"
+                    alt={"tables icon"}
                 />
                 <h2 className="text-3xl font-bold">
-                    Crafting
+                    Prayer
                 </h2>
 
             </div>
 
             <UserSearch
-                skill='Crafting'
+                skill='Prayer'
                 onDataUpdate={setSearchData}
             />
             <DisplayXp
                 data={searchData}
                 onXpUpdate={handleXpUpdate}
             />
-            <CraftingTable xpNeeded={xpNeeded} />
 
         </div>
 

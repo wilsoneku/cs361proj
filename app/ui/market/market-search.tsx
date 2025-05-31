@@ -1,8 +1,8 @@
 'use client'
 
 import React, {useState, useEffect, ChangeEvent, useActionState, useRef} from 'react';
-import {submitItemID} from "@/app/ui/market/item-search-actions";
-import {ItemInfo} from "@/app/market/page";
+import {fetchItemID} from "@/app/ui/market/market-search-actions";
+import {ItemInfo} from "@/app/lib/types";
 import Form from 'next/form'
 
 type NameIdMap = Record<string, number>;
@@ -16,56 +16,74 @@ type SearchData = {
 interface MarketSearchProps {
     onSearchResults: (results: ItemInfo | null, itemId: string | null) => void;
     initialItemId?: string | null;
+    isLoading?: boolean;
 }
 
-export default function MarketSearch({ onSearchResults, initialItemId }: MarketSearchProps) {
+export default function MarketSearch({ onSearchResults, initialItemId, isLoading = false }: MarketSearchProps) {
     const [data, setData] = useState<NameIdMap>({});
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [selected, setSelected] = useState<{ name: string; id: number } | null>(null);
     const [isUserSearch, setIsUserSearch] = useState(false);
+    const [hasInitialized, setHasInitialized] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const initialData: SearchData = { itemID: null, info: null };
     const [state, formAction] = useActionState(
-        submitItemID as (prevState: SearchData, formData: FormData) => Promise<SearchData>,
+        fetchItemID as (prevState: SearchData, formData: FormData) => Promise<SearchData>,
         initialData
     );
 
     const formRef = useRef<HTMLFormElement>(null);
+    const hasProcessedInitialItem = useRef(false);
 
-    // on page load
+    // on page load fetch item data once
     useEffect(() => {
+        if (hasInitialized) return;
+
         fetch('/name_id_map.json')
             .then(res => res.json())
-            .then(setData);
-    }, []);
+            .then(mapData => {
+                setData(mapData);
+                setHasInitialized(true);
+            })
+            .catch(err => {
+                console.error('Failed to load item data:', err);
+                setHasInitialized(true);
+            });
+    }, [hasInitialized]);
 
     // Handle initial item ID from URL
     useEffect(() => {
-        if (initialItemId && data && Object.keys(data).length > 0) {
+        if (
+            hasInitialized &&
+            initialItemId &&
+            data &&
+            Object.keys(data).length > 0 &&
+            !hasProcessedInitialItem.current &&
+            !isSubmitting &&
+            !isLoading
+        ) {
             const itemName = Object.keys(data).find(name => data[name].toString() === initialItemId);
             if (itemName) {
                 setQuery(itemName);
                 setSelected({ name: itemName, id: parseInt(initialItemId) });
-
-                // Auto-submit the form for the URL item
-                setTimeout(() => {
-                    formRef.current?.requestSubmit();
-                }, 100);
+                hasProcessedInitialItem.current = true;
             }
-        } else if (!initialItemId) {
-            // Clear search when no item ID in URL
-            setQuery('');
-            setSelected(null);
-            setSuggestions([]);
         }
-    }, [initialItemId, data]);
+    }, [initialItemId, data, hasInitialized, isSubmitting, isLoading]);
 
-    // Combine the two useEffect hooks into one with proper conditions
+    // Handle state updates
     useEffect(() => {
         if (state.info || state.error) {
-            onSearchResults(state.info, state.itemID);
-            // Only clear if user is NOT actively typing and it's not a URL navigation
+            setIsSubmitting(false);
+
+            // Only notify parent if it was a user-initiated search
+            if (isUserSearch || !hasProcessedInitialItem.current) {
+                onSearchResults(state.info, state.itemID);
+            }
+
+            // Only clear if it was a user-initiated search and was successful
             if (state.info && !state.error && isUserSearch) {
                 setTimeout(() => {
                     setQuery('');
@@ -75,8 +93,10 @@ export default function MarketSearch({ onSearchResults, initialItemId }: MarketS
                 }, 800);
             }
         }
-    }, [state.info, state.error, state.itemID]);
+    }, [state.info, state.error, state.itemID, onSearchResults, isUserSearch]);
 
+
+    // Suggestion / autocomplete handler
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setQuery(value);
@@ -92,15 +112,25 @@ export default function MarketSearch({ onSearchResults, initialItemId }: MarketS
         setSuggestions(matches.slice(0, 10));
     };
 
+    // Prevent submissions (after item is selected)
     const handleSelect = (name: string) => {
+        // Prevent submission if already submitting or if parent is loading
+        if (isSubmitting || isLoading) return;
+
         setQuery(name);
         setSelected({ name, id: data[name] });
         setSuggestions([]);
         setIsUserSearch(true);
-        setTimeout(() => {
-            formRef.current?.requestSubmit();
-        }, 0);
+        setIsSubmitting(true);
+
+        // Use requestAnimationFrame to ensure we're not in the middle of a render
+        requestAnimationFrame(() => {
+            if (formRef.current) {
+                formRef.current.requestSubmit();
+            }
+        });
     };
+
 
     return (
         <div className="w-96 mx-auto">
@@ -115,6 +145,7 @@ export default function MarketSearch({ onSearchResults, initialItemId }: MarketS
                         onChange={handleChange}
                         placeholder="Search in the Grand Exchange..."
                         className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        disabled={isLoading || isSubmitting}
                     />
                         {suggestions.length > 0 && (
                             <ul className="absolute top-full left-0 right-0 mt-1
@@ -142,6 +173,11 @@ export default function MarketSearch({ onSearchResults, initialItemId }: MarketS
                     {state.error && (
                         <div className="text-red-500">{state.error}</div>
                     )}
+
+                    {(isLoading || isSubmitting) && (
+                        <div className="text-blue-500 mt-2">Loading item data...</div>
+                    )}
+
             </Form>
         </div>
     );

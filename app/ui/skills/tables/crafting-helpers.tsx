@@ -1,4 +1,4 @@
-import { CraftingItem, SimpleResponse } from '@/app/ui/skills/tables/table-load-actions';
+import { CraftingItem, SimpleResponse } from '@/app/lib/types';
 import nameIdMap from '@/public/name_id_map.json';
 
 const idToNameMap: Record<number, string> = Object.entries(nameIdMap).reduce((acc, [name, id]) => {

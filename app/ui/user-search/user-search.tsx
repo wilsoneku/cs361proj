@@ -1,23 +1,19 @@
 'use client'
-import {altUserSearchActions} from "@/app/ui/user-search/alt-user-search-actions";
-import {useActionState, useState} from "react";
 import Form from 'next/form'
-import DisplayXp from "@/app/ui/user-search/display-xp";
+import {useActionState, useEffect} from "react";
 
-interface SkillInfo {
-    level: number;
-    xp: number;
-}
-
-interface UserSearchProps {
-    skill: string;
-}
+import {userSearchActions} from "@/app/ui/user-search/user-search-actions";
+import {SkillInfo, UserSearchProps} from "@/app/lib/types";
 
 type SearchData = [string | null, string | null, SkillInfo | null] | null;
 
-export default function UserSearch({skill}: UserSearchProps) {
+export default function UserSearch({skill, onDataUpdate}: UserSearchProps) {
     const initialData: SearchData = [null, null, null];
-    const [replyData, action, isLoading] = useActionState(altUserSearchActions, initialData);
+    const [replyData, action, isLoading] = useActionState(userSearchActions, initialData);
+
+    useEffect(() => {
+        onDataUpdate(replyData);
+    }, [replyData, onDataUpdate]);
 
     return (
         <div className="flex flex-col justify-center items-cen w-full">
@@ -44,7 +40,6 @@ export default function UserSearch({skill}: UserSearchProps) {
                         {isLoading ? "Fetching..." : "Submit"} </button>
                 </div>
             </Form>
-            <DisplayXp data={replyData} />
         </div>
 
     );

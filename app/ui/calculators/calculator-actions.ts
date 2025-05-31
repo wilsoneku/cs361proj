@@ -1,5 +1,7 @@
 'use server'
 
+import {deleteSavedCalculation} from "@/app/lib/data";
+
 interface JSONOutput {
     inputs: Record<string, number>;
     outputs: Record<string, number>;
@@ -25,11 +27,23 @@ export async function getSavedCalculations() {
     }
 }
 
+export async function deleteCalculation(calculationId: string) {
+    try {
+        // Call the database function to delete the calculation
+        const result = await deleteSavedCalculation(calculationId);
 
-export const uploadToDatabase = async (jsonData: JSONOutput) => {
-    // setIsUploading(true);
-    // setUploadStatus('');
+        return { success: true, data: result };
+    } catch (error) {
+        console.error('Error deleting calculation:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'An unknown error occurred'
+        };
+    }
+}
 
+
+export const uploadToDatabase = async (jsonData: any) => {
     try {
         const response = await fetch('http://localhost:8004/upload', {
             method: 'POST',

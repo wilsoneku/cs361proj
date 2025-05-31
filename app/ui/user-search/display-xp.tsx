@@ -1,24 +1,14 @@
 'use client'
 
-import xpTable from "@/app/ui/user-search/xp-table";
 import React, {useState, useEffect} from "react";
-import CraftingTable from "@/app/ui/skills/crafting/crafting-table";
+import xpTable from "@/app/ui/user-search/xp-table";
+import {DisplayXpProps} from "@/app/lib/types";
 
-interface skillInfo {
-    level: number;
-    xp: number;
-}
 
-interface DisplayXpProps {
-    data: [string | null, string | null, skillInfo | null] | null;
-}
-
-export default function DisplayXp({data}: DisplayXpProps) {
+export default function DisplayXp({data, onXpUpdate}: DisplayXpProps) {
     const [username, returnedSkill, skillInfo] = data ?? [null, null, null];
     const [currentLevel, setCurrentLevel] = useState('');
     const [targetLevel, setTargetLevel] = useState('');
-    const [xpNeeded, setXpNeeded] = useState<number | undefined>();
-    const [resetKey, setResetKey] = useState(0);
 
     // Update currentLevel when microservice data is received
     useEffect(() => {
@@ -26,7 +16,6 @@ export default function DisplayXp({data}: DisplayXpProps) {
             setCurrentLevel(skillInfo.level.toString());
         }
     }, [skillInfo]);
-
 
     const handleLevelChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (value: string) => void) => {
         const value = e.target.value;
@@ -36,11 +25,19 @@ export default function DisplayXp({data}: DisplayXpProps) {
     };
 
     const currentLevelNum = parseInt(currentLevel || '0');
-    const currentXp = xpTable.get(currentLevelNum) ?? 0;
     const targetLevelNum = parseInt(targetLevel || '0');
+
+    const currentXp = xpTable.get(currentLevelNum) ?? 0;
     const targetXp = xpTable.get(targetLevelNum) ?? 0;
 
     const xpDifference = targetXp - currentXp;
+
+    // Update parent when xpDifference changes
+    useEffect(() => {
+        if (xpDifference > 0) {
+            onXpUpdate(xpDifference);
+        }
+    }, [xpDifference, onXpUpdate]);
 
     return (
         <div className="flex flex-col gap-2 items-center mt-4">
@@ -75,10 +72,12 @@ export default function DisplayXp({data}: DisplayXpProps) {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                    <p><strong>Current Xp:</strong> {" "}
+                    <p>
+                        <strong>Current Xp:</strong> {" "}
                         {skillInfo?.xp?.toLocaleString() || currentXp?.toLocaleString() || 0}
                     </p>
-                    <p><strong>Target Xp:</strong> {" "}
+                    <p>
+                        <strong>Target Xp:</strong> {" "}
                         {targetXp?.toLocaleString() || 0}
                     </p>
 
@@ -90,9 +89,6 @@ export default function DisplayXp({data}: DisplayXpProps) {
                     <p><strong>Xp Needed:</strong> {xpDifference.toLocaleString()}</p>
                 )}
             </div>
-            <CraftingTable
-                xpNeeded={xpDifference > 0 ? xpDifference : undefined}
-            />
         </div>
     );
 }

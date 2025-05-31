@@ -3,12 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { StarIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
-import {
-    compareBatchPerformance,
-    CraftingItem,
-    fetchBatchSimpleResponse,
-    SimpleResponse
-} from '@/app/ui/skills/tables/table-load-actions';
+import {fetchTableData} from '@/app/ui/skills/tables/table-load-actions';
 import { fetchCraftingMethods } from '@/app/lib/data';
 import {
     calculateActionsNeeded,
@@ -19,11 +14,10 @@ import {
     renderProfitCell,
     renderProfitHrCell,
     filterItemsByFavorites
-} from '@/app/ui/skills/crafting/crafting-helpers';
+} from '@/app/ui/skills/tables/crafting-helpers';
+import {CraftingItem, SimpleResponse, CraftingTableProps} from "@/app/lib/types";
+import {PriceWarning} from "@/app/ui/skills/price-warning";
 
-interface CraftingTableProps {
-    xpNeeded?: number | undefined;
-}
 
 export default function CraftingTable({xpNeeded}: CraftingTableProps) {
     const [items, setItems] = useState<CraftingItem[]>([]);
@@ -33,7 +27,7 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-    // Load base crafting methods data when component mounts
+    // Load base table-helpers methods data when component mounts
     useEffect(() => {
         loadBaseCraftingData();
     }, []);
@@ -44,19 +38,10 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
             const data = await fetchCraftingMethods();
             setItems(data);
         } catch (error) {
-            console.error('Database error loading crafting methods:', error);
+            console.error('Database error loading table-helpers methods:', error);
             setErrors({ database: error instanceof Error ? error.message : 'Database error' });
         } finally {
             setIsLoadingBase(false);
-        }
-    };
-
-    const compareBatchSpeed = async () => {
-        try {
-            const results = await compareBatchPerformance(items);
-        } catch (error) {
-            console.error('Database error loading crafting methods:', error);
-            setErrors({ database: error instanceof Error ? error.message : 'Database error' });
         }
     };
 
@@ -75,7 +60,7 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
         setErrors({});
 
         try {
-            const result = await fetchBatchSimpleResponse(items);
+            const result = await fetchTableData(items);
 
             const validData: Record<string, SimpleResponse> = {};
             Object.entries(result.results).forEach(([itemId, response]) => {
@@ -98,7 +83,7 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
     // Initialize favorites from sessionStorage
     const [favorites, setFavorites] = useState<number[]>(() => {
         if (typeof window !== 'undefined') {
-            const savedFavorites = sessionStorage.getItem('crafting-favorites');
+            const savedFavorites = sessionStorage.getItem('table-helpers-favorites');
             return savedFavorites ? JSON.parse(savedFavorites) : [];
         }
         return [];
@@ -107,7 +92,7 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
     // Save favorites to sessionStorage whenever favorites change
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            sessionStorage.setItem('crafting-favorites', JSON.stringify(favorites));
+            sessionStorage.setItem('table-helpers-favorites', JSON.stringify(favorites));
         }
     }, [favorites]);
 
@@ -125,7 +110,7 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
     // Clear all favorites function
     const clearAllFavorites = () => {
         setFavorites([]);
-        sessionStorage.removeItem('crafting-favorites');
+        sessionStorage.removeItem('table-helpers-favorites');
     };
 
 
@@ -183,13 +168,16 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
                         {showFavoritesOnly ? 'Show All' : 'Show Favorites'}
                     </span>
                 </button>
-                <button
-                    onClick={loadAllMarketData}
-                    disabled={isLoadingMarket || items.length === 0}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-blue-400"
-                >
-                    {isLoadingMarket ? 'Refreshing...' : 'Refresh Market Data'}
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={loadAllMarketData}
+                        disabled={isLoadingMarket || items.length === 0}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-blue-400"
+                    >
+                        {isLoadingMarket ? 'Refreshing...' : 'Refresh Market Data'}
+                    </button>
+                    <PriceWarning />
+                </div>
             </div>
 
             {/* Error Display */}
@@ -207,7 +195,7 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
             {/* Table */}
             <div className="flow-root align-middle rounded-lg bg-gray-50 p-2">
                 <table className="text-gray-900 w-full table-fixe">
-                    <thead className="rounded-lg text-left text-sm font-normal">
+                    <thead className="rounded-lg text-center text-sm font-normal">
                     <tr className="items-center justify-center">
                         <th scope="col" className="px-4 py-5 font-medium pl-6">Fav</th>
                         <th scope="col" className="px-4 py-5 font-medium pl-6">Lvl</th>
@@ -234,7 +222,7 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
 
                         return (
                             <tr key={item.id} className="w-full border-b py-3 text-sm last-of-type:border-none">
-                                <td className="px-4 py-2">
+                                <td className="pl-8 py-2">
                                     <button
                                         onClick={() => toggleFavorite(item.id)}
                                         className="hover:scale-110 transition-transform"
@@ -250,7 +238,7 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
                                 <td className="px-4 py-2 text-center">{item.product}</td>
                                 <td className="px-4 py-2 text-center">{item.exp}</td>
                                 <td className="px-4 py-2 text-center">{item.exp_rate}</td>
-                                <td className="px-4 py-2 text-center">
+                                <td className="px-4 py-2 text-left">
                                     {renderIngredientsCell(item, isLoadingMarket, getItemData)}
                                 </td>
                                 <td className="px-4 py-2 text-center">

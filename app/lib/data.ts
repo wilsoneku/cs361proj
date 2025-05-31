@@ -3,21 +3,20 @@
 import postgres from 'postgres';
 import {
   crafting_methods,
-  custom_calculations
-} from './definitions';
+  ItemData
+} from '@/app/lib/types';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 export async function fetchCraftingMethods() {
 
   try {
-    console.log('Fetching crafting data...');
+    console.log('Fetching crafting_methods from database...');
 
     const crafting_data = await sql<crafting_methods[]>`
         SELECT id, lvl, product, exp, exp_rate, ingredients FROM crafting_methods
         ORDER BY crafting_methods.lvl ASC`;
 
-    console.log('Fetched crafting data: ', crafting_data);
     return crafting_data;
 
   } catch (error) {
@@ -26,19 +25,51 @@ export async function fetchCraftingMethods() {
   }
 }
 
-export async function fetchCustomCalculations() {
- try {
-   const calculation_data = await sql<custom_calculations[]>`
-      SELECT * FROM custom_calculations
-      ORDER BY custom_calculations.id ASC`;
+export async function fetchItemData(itemId: number
+) {
+  try {
+    if (itemId) {
+      console.log(`Fetching item_data from database for item ID: ${itemId}`);
 
-   return calculation_data;
- }
- catch (error) {
-   console.error('Database Error:', error);
-   throw new Error('Failed to fetch crafting_methods.');
- }
+      // Query for a specific item by ID
+      const item = await sql<ItemData[]>`
+        SELECT id, highalch, lowalch, buylimit
+        FROM items
+        WHERE id = ${itemId}`;
+
+      return item.length > 0 ? item[0] : null;
+    }} catch (error) {
+  console.error('Database Error:', error);
+  throw new Error('Failed to fetch ItemData.');
+  }
 }
+
+export async function deleteSavedCalculation(calculationId: string) {
+  try {
+    console.log(`Deleting saved calculation ID: ${calculationId}`);
+
+    // Query
+    const result = await sql`
+      DELETE FROM custom_calculations
+      WHERE id = ${calculationId}
+    `;
+
+    if (result.count === 0) {
+      return { success: false, message: 'Calculation not found or you do not have permission to delete it' };
+    }
+
+    return {
+      success: true,
+      message: 'Calculation successfully deleted',
+      calculationId
+    };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to delete saved calculation.');
+  }
+}
+
+
 
 // export async function fetchLatestInvoices() {
 //   try {

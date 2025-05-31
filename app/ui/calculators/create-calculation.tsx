@@ -17,12 +17,12 @@ interface JSONOutput {
     outputs: Record<string, number>;
 }
 
-interface PopupProps {
+interface CreateCalculationProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-export function CreateCalculation({ isOpen, onClose }: PopupProps) {
+export function CreateCalculation({ isOpen, onClose }: CreateCalculationProps) {
     const [data, setData] = useState<NameIdMap>({});
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -188,7 +188,7 @@ export function CreateCalculation({ isOpen, onClose }: PopupProps) {
                             <p className={`text-sm ${
                                 currentSelectionType === 'input' ? 'text-blue-600' : 'text-gray-500'
                             }`}>
-                                Items required for crafting
+                                Inputs
                             </p>
                         </div>
 
@@ -215,13 +215,13 @@ export function CreateCalculation({ isOpen, onClose }: PopupProps) {
                                 <span className={`text-lg font-semibold ${
                                     currentSelectionType === 'output' ? 'text-green-700' : 'text-gray-700'
                                 }`}>
-          End Product
-        </span>
+                                  Outputs
+                                </span>
                             </div>
                             <p className={`text-sm ${
                                 currentSelectionType === 'output' ? 'text-green-600' : 'text-gray-500'
                             }`}>
-                                Items produced from crafting
+                                Products from your skilling method
                             </p>
                         </div>
                     </div>
@@ -327,7 +327,7 @@ export function CreateCalculation({ isOpen, onClose }: PopupProps) {
                         disabled={selectedItems.length === 0 || isUploading}
                         className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                     >
-                        {isUploading ? 'Uploading...' : 'Create & Upload Calculation'}
+                        {isUploading ? 'Uploading...' : 'Create & Upload'}
                     </button>
                 </div>
 

@@ -2,6 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import {getSavedCalculations} from "@/app/ui/calculators/calculator-actions";
+import {DeleteCalculation} from "@/app/ui/calculators/delete-calculation";
 
 interface EnrichedCalculation {
     id: number;
@@ -12,28 +13,39 @@ interface EnrichedCalculation {
     profit: number;
 }
 
-export default function Calculators() {
+export default function DisplayCalculations() {
     const [items, setItems] = useState<EnrichedCalculation[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
     const [favorites, setFavorites] = useState<number[]>([]);
     const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
+    async function loadCalculations() {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await getSavedCalculations();
+            if (response && response.status === 'success') {
+                setItems(response.data);
+            }
+        } catch (err) {
+            setError('Failed to load saved calculations');
+            console.error('Error loading calculations:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await getSavedCalculations();
-                if (response && response.status === 'success') {
-                    setItems(response.data);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        void fetchData();
+        loadCalculations()
     }, []);
+
+    const handleDeleteSuccess = () => {
+        // Reload the calculations after successful deletion
+        loadCalculations();
+    };
 
     // Filter favorites
     const displayItems = showOnlyFavorites
@@ -41,59 +53,52 @@ export default function Calculators() {
         : items;
 
 
-    const renderDetailedItems = (itemsObject: Record<string, any>) => {
-        return (
-            <div className="ingredients-list">
-                {Object.entries(itemsObject).map(([itemId, itemData]) => (
-                    <div key={itemId} className="flex flex-col mb-2 p-2 border rounded">
-                       <div className="flex flex-row">
-                           <div className="font-medium">
-                               {itemData.name} (ID: {itemId})
-                           </div>
-                       </div>
-                        <div className="flex flex-row">
-
-                            <div className="font-medium">
-                                 {itemData.quantity} @ {itemData.unit_price?.toLocaleString()} gp ea.
-                            </div>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                            Total: {itemData.total_cost?.toLocaleString()} gp
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    };
-
     const getProfitColor = (profit: number) => {
         if (profit > 0) return 'text-green-600';
         if (profit < 0) return 'text-red-600';
         return 'text-gray-600';
     };
 
+    if (isLoading) {
+        return <div className="text-center py-4">Loading saved calculations...</div>;
+    }
 
-    if (loading) return <div className="p-4">Loading calculations...</div>;
-    // if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
+    if (error) {
+        return <div className="text-red-500 text-center py-4">{error}</div>;
+    }
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-6">Calculation Analysis</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="flex flex-wrap flex-shrink-0 justify-center items-start gap-4">
                 {displayItems.map((item) => (
-                    <div key={`calculation-${item.id}`} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow h-fit">
+                    <div
+                        key={`calculation-${item.id}`}
+                        className="flex-shrink-0 w-52 min-w-52 border border-gray-200 rounded-lg shadow-md">
                         {/* Card Header */}
-                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 rounded-t-lg">
-                            <h3 className="text-base font-semibold text-gray-900">
-                                Calculation ID: {item.id}
-                            </h3>
+                        <div className="flex flex-row justify-between items-center
+                                        bg-gray-50 px-4 py-3 border-b border-gray-200 rounded-t-lg"
+                        >
+                            <div className="flex flex-col justify-start items-start">
+                                <h3 className="text-md text-gray-900">
+                                    {Object.values(item.outputs_detailed)[0]?.name}
+
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                    calcID:{item.id}
+                                </p>
+                            </div>
+                            <DeleteCalculation
+                                calculationId={item.id.toString()}
+                                onDeleteSuccess={handleDeleteSuccess}
+                            />
                         </div>
 
                         {/* Card Body */}
                         <div className="p-4 space-y-4">
                             {/* Inputs Section */}
                             <div className="space-y-2">
-                                <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wide">Required Items</h4>
+                                <h4 className="font-medium text-gray-700 text-xs uppercase tracking-wide">
+                                    Required Items
+                                </h4>
                                 <div className="space-y-1">
                                     {Object.entries(item.inputs_detailed).map(([itemId, itemData], index) => (
                                         <div
@@ -104,14 +109,16 @@ export default function Calculators() {
                                                 <span>{itemData.quantity}x {itemData.name}</span>
                                             </div>
 
-                                            {/* Tooltip */}
-                                            <div className="absolute z-50 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg -top-16 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                                            {/* HOVER Tooltip */}
+                                            <div
+                                                className="absolute z-50 invisible opacity-0 group-hover:visible group-hover:opacity-100
+                                                transition-opacity duration-200 bg-gray-900 text-white text-xs rounded-lg
+                                                px-3 py-2 shadow-lg -top-16 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
+                                            >
                                                 <div className="space-y-1">
                                                     <div>ID: {itemId}</div>
-                                                    <div>Price: {itemData.unit_price?.toLocaleString()} gp each</div>
-                                                    <div>Total: {itemData.total_cost?.toLocaleString()} gp</div>
+                                                    <div>Price: {itemData.unit_price?.toLocaleString()} gp ea.</div>
                                                 </div>
-                                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                                             </div>
                                         </div>
                                     ))}
@@ -164,7 +171,6 @@ export default function Calculators() {
                     </div>
                 ))}
             </div>
-        </div>
     );
 
 
