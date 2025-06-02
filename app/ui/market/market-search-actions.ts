@@ -4,7 +4,7 @@ import {ItemInfo, SearchData, TimingInfo, MarketServiceResponse} from "@/app/lib
 
 async function getMarketData(itemid: string): Promise<{ data: MarketServiceResponse | null, timing: TimingInfo }> {
     const functionStart = performance.now();
-    const url = 'http://localhost:8001/market-data/'
+    const url = 'http://localhost:8001/market-data'
     const payload = {'itemid': itemid}
     console.log('🚀 getMarketData started for itemid:', itemid)
 

@@ -1,24 +1,13 @@
 'use client'
 
-import React, {useState, useEffect, ChangeEvent, useActionState, useRef, useCallback} from 'react';
-import {fetchItemID} from "@/app/ui/market/market-search-actions";
-import {ItemInfo, SearchData} from "@/app/lib/types";
-import Form from 'next/form'
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {MarketSearchProps} from "@/app/lib/types";
 
 type NameIdMap = Record<string, number>;
 
-interface MarketSearchProps {
-    onSearchResults: (results: ItemInfo | null, itemId: string | null) => void;
-    initialItemId?: string | null;
-    isLoading?: boolean;
-    onLoadingChange?: (isLoading: boolean) => void;
-}
-
 export default function MarketSearch({
-                                         onSearchResults,
-                                         initialItemId,
-                                         isLoading = false,
-                                         onLoadingChange
+                                         onItemSelected,
+                                         isLoading
 }: MarketSearchProps) {
     const [nameIdMap, setNameIdMap] = useState<NameIdMap>({});
     const [query, setQuery] = useState('');
@@ -26,7 +15,6 @@ export default function MarketSearch({
     const [selected, setSelected] = useState<{ name: string; id: number } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const formRef = useRef<HTMLFormElement>(null);
     const hasInitialized = useRef(false);
 
     // Load name-ID mapping on mount
@@ -39,22 +27,6 @@ export default function MarketSearch({
             .catch(err => console.error('Failed to load item data:', err))
             .finally(() => { hasInitialized.current = true; });
     }, []);
-
-    // Handle initial item ID from URL
-    useEffect(() => {
-        if (!hasInitialized.current || !initialItemId || !nameIdMap || Object.keys(nameIdMap).length === 0) {
-            return;
-        }
-
-        const itemName = Object.keys(nameIdMap).find(name =>
-            nameIdMap[name].toString() === initialItemId
-        );
-
-        if (itemName) {
-            setQuery(itemName);
-            setSelected({ name: itemName, id: parseInt(initialItemId) });
-        }
-    }, [initialItemId, nameIdMap]);
 
     // Handle input changes and generate suggestions
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,64 +44,45 @@ export default function MarketSearch({
         setSuggestions(matches.slice(0, 10));
     }, [nameIdMap]);
 
-    // Handle suggestion selection
+    // Handle selected item from suggestions
     const handleSelect = useCallback((name: string) => {
         if (isLoading) {
             return;
         }
 
+        const selectedItem = { name, id: nameIdMap[name] };
+
         setQuery(name);
-        setSelected({ name, id: nameIdMap[name] });
+        setSelected(selectedItem);
         setSuggestions([]);
         setError(null);
-        onLoadingChange?.(true);
 
-        setTimeout(() => {
-            formRef.current?.requestSubmit();
-        }, 100);
-    }, [nameIdMap, isLoading, onLoadingChange]);
+        // Pass selected item ID back to parent
+        onItemSelected(selectedItem.id.toString());
 
-    // Form action handler
-    const handleFormAction = useCallback(async (formData: FormData) => {
-        if (!selected?.id) {
-            setError('No item selected');
-            onLoadingChange?.(false);
-            return;
-        }
+    }, [nameIdMap, isLoading]);
 
-        try {
-            setError(null);
-
-            // Actually await the API call result
-            const result = await fetchItemID({} as SearchData, formData);
-
-            if (result.error) {
-                setError(result.error);
-                onSearchResults(null, null);
-            } else {
-                onSearchResults(result.info, result.itemID);
-            }
-        } catch (err) {
-            setError('Search failed. Please try again.');
-            console.error('Search error:', err);
-        } finally {
-            onLoadingChange?.(false);
-        }
-    }, [onSearchResults, selected]);
-
+    // Clear search bar when input is selected
     const handleInputFocus = useCallback(() => {
         setQuery('');
         setSelected(null);
         setSuggestions([]);
         setError(null);
 ;
-    }, [onSearchResults]);
+    }, []);
+
+    // Form submit handler - just prevents default behavior
+    const formAction = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+        if (selected) {
+            onItemSelected(selected.id.toString());
+        }
+    }, [selected, onItemSelected]);
 
     return (
         <div className="w-96 mx-auto">
-            <Form
-                action={handleFormAction}
-                ref={formRef}
+            <form
+                onSubmit={formAction}
                 className="relative"
             >
                     <input
@@ -170,7 +123,7 @@ export default function MarketSearch({
                         </div>
                     )}
 
-            </Form>
+            </form>
         </div>
     );
 };

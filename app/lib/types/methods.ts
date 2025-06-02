@@ -1,3 +1,5 @@
+import {TimingInfo} from "@/app/lib/types/api";
+
 export interface CraftingItem {
     id: number;
     lvl: number;
@@ -6,15 +8,6 @@ export interface CraftingItem {
     exp_rate: number;
     ingredients: Record<string, any>;
     xpNeeded?: number;
-}
-
-export interface IngredientsData {
-    name: string;
-    avg_cost: number;
-    high_cost: number;
-    low_cost: number;
-    quantity: number;
-    total_cost: number;
 }
 
 export interface ItemData {
@@ -53,10 +46,7 @@ export type SearchData = {
     timing?: TimingInfo;
 };
 
-export interface TimingInfo {
-    total_time: number;
-    api_call_time: number;
-    processing_time: number;
-    function_name: string;
+export interface TimeAgoOptions {
+    includeSeconds?: boolean;
+    shortFormat?: boolean;
 }
-

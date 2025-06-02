@@ -1,3 +1,5 @@
+import {ItemInfo} from "@/app/lib/types/methods";
+
 export interface SkillInfo {
     level: number;
     xp: number;
@@ -15,4 +17,14 @@ export interface DisplayXpProps {
 
 export interface CraftingTableProps {
     xpNeeded?: number | undefined;
+}
+
+export interface MarketSearchProps {
+    onItemSelected: (itemId: string | null) => void;
+    isLoading: boolean;
+}
+
+export interface ItemDisplayProps {
+    itemInfo: ItemInfo | null;
+    isLoading: boolean;
 }

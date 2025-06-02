@@ -1,20 +1,9 @@
 // item-display.tsx
 'use client'
-
 import React from 'react';
-import {ItemInfo} from "@/app/lib/types";
+import {ItemDisplayProps, TimeAgoOptions} from "@/app/lib/types";
 import ItemDisplaySkeleton from "@/app/ui/market/item-display-skeleton";
 
-interface ItemDisplayProps {
-    itemInfo: ItemInfo | null;
-    itemId: string | null;
-    isLoading: boolean;
-}
-
-interface TimeAgoOptions {
-    includeSeconds?: boolean;
-    shortFormat?: boolean;
-}
 
 function formatTimeAgo(unixTimestamp: number, options: TimeAgoOptions = {}): string {
     const { includeSeconds = true, shortFormat = false } = options;
@@ -55,7 +44,8 @@ function formatTimeAgo(unixTimestamp: number, options: TimeAgoOptions = {}): str
     return shortFormat ? 'now' : 'just now';
 }
 
-export default function ItemDisplay({ itemInfo, itemId, isLoading }: ItemDisplayProps) {
+
+export default function ItemDisplay({ itemInfo, isLoading }: ItemDisplayProps) {
     if (isLoading) {
         return (
             <ItemDisplaySkeleton />
@@ -69,15 +59,15 @@ export default function ItemDisplay({ itemInfo, itemId, isLoading }: ItemDisplay
     const convertedName = item.name.replace(/ /g, '_');
 
     const handleWikiClick = () => {
-        if (itemId) {
+        if (item.id) {
             const wikiUrl = `https://oldschool.runescape.wiki/w/${convertedName}`;
             window.open(wikiUrl, '_blank');
         }
     };
 
     const handleGedbClick = () => {
-        if (itemId) {
-            const gedbUrl = `https://secure.runescape.com/m=itemdb_oldschool/a=12/Ashes/viewitem?obj=${itemId}`;
+        if (item.id) {
+            const gedbUrl = `https://secure.runescape.com/m=itemdb_oldschool/a=12/Ashes/viewitem?obj=${item.id}`;
             window.open(gedbUrl, '_blank');
         }
     };
@@ -95,7 +85,7 @@ export default function ItemDisplay({ itemInfo, itemId, isLoading }: ItemDisplay
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800 flex items-end">
                             {item.name}
-                            <span className="text-slate-500 text-sm mb-1 ml-2">(Item ID: {itemId})</span>
+                            <span className="text-slate-500 text-sm mb-1 ml-2">(Item ID: {item.id})</span>
                         </h1>
                     </div>
                 </div>

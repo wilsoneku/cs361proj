@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useState, useEffect, useCallback, Suspense} from 'react';
+import React, {useState, useEffect, useCallback, Suspense, useRef} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MarketSearch from "@/app/ui/market/market-search";
 import ItemDisplay from "@/app/ui/market/item-display";
@@ -17,25 +17,27 @@ export default function Page() {
     const [isLoading, setIsLoading] = useState(false);
     const itemIdFromUrl = searchParams.get('item');
 
-    const handleLoadingChange = useCallback((loading: boolean) => {
-        setIsLoading(loading);
-    }, []);
+    const pendingRequestRef = useRef<string | null>(null);
 
-    // Consolidated fetch function
     const fetchItemData = useCallback(async (itemId: string) => {
-        if (!itemId || isLoading) return;
+        if (!itemId || pendingRequestRef.current === itemId) return;
+
         // Check cache first
-        if (itemCache.has(itemId)) {
-            setSearchResults(itemCache.get(itemId)!);
+        const cachedItem = itemCache.get(itemId);
+        if (cachedItem) {
+            setSearchResults(cachedItem);
             return;
         }
 
+        pendingRequestRef.current = itemId;
         setIsLoading(true);
+
         try {
             const formData = new FormData();
             formData.append('itemID', itemId);
 
-            const result = await fetchItemID({ itemID: null, info: null }, formData);
+            const result =
+                await fetchItemID({ itemID: null, info: null }, formData);
 
             if (result.info && !result.error) {
                 setItemCache(prev => new Map(prev).set(itemId, result.info as ItemInfo));
@@ -49,10 +51,19 @@ export default function Page() {
             setSearchResults(null);
         } finally {
             setIsLoading(false);
+            pendingRequestRef.current = null;
         }
-    }, [itemCache, isLoading]);
+    }, [itemCache]);
 
-    // Single useEffect to handle URL changes
+    const handleItemSelected = useCallback((itemId: string | null) => {
+        if (itemId && itemId !== itemIdFromUrl) {
+            router.push(`/market?item=${itemId}`);
+        } else if (!itemId && itemIdFromUrl) {
+            router.push('/market');
+        }
+    }, [itemIdFromUrl, router]);
+
+    // Handle URL changes
     useEffect(() => {
         if (itemIdFromUrl) {
             fetchItemData(itemIdFromUrl);
@@ -60,17 +71,6 @@ export default function Page() {
             setSearchResults(null);
         }
     }, [itemIdFromUrl, fetchItemData]);
-
-    // Simplified search results handler
-    const handleSearchResults = useCallback((results: ItemInfo | null, itemId: string | null) => {
-        setSearchResults(results);
-
-        if (itemId && itemId !== itemIdFromUrl) {
-            router.push(`/market?item=${itemId}`);
-        } else if (!itemId && itemIdFromUrl) {
-            router.push('/market');
-        }
-    }, [itemIdFromUrl, router]);
 
     return(
         <div className="min-h-screen ">
@@ -80,18 +80,14 @@ export default function Page() {
                 </h2>
 
                 <MarketSearch
-                    onSearchResults={handleSearchResults}
-                    initialItemId={itemIdFromUrl}
+                    onItemSelected={handleItemSelected}
                     isLoading={isLoading}
-                    onLoadingChange={handleLoadingChange}
                 />
 
                 <ItemDisplay
                     itemInfo={searchResults}
-                    itemId={itemIdFromUrl}
                     isLoading={isLoading}
                 />
-
 
             </div>
         </div>
