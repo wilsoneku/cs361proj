@@ -1,103 +1,63 @@
 'use client'
 
-import React, {useState, useEffect, ChangeEvent, useActionState, useRef} from 'react';
+import React, {useState, useEffect, ChangeEvent, useActionState, useRef, useCallback} from 'react';
 import {fetchItemID} from "@/app/ui/market/market-search-actions";
-import {ItemInfo} from "@/app/lib/types";
+import {ItemInfo, SearchData} from "@/app/lib/types";
 import Form from 'next/form'
 
 type NameIdMap = Record<string, number>;
-
-type SearchData = {
-    itemID: string | null;
-    info: ItemInfo | null;
-    error?: string;
-};
 
 interface MarketSearchProps {
     onSearchResults: (results: ItemInfo | null, itemId: string | null) => void;
     initialItemId?: string | null;
     isLoading?: boolean;
+    onLoadingChange?: (isLoading: boolean) => void;
 }
 
-export default function MarketSearch({ onSearchResults, initialItemId, isLoading = false }: MarketSearchProps) {
-    const [data, setData] = useState<NameIdMap>({});
+export default function MarketSearch({
+                                         onSearchResults,
+                                         initialItemId,
+                                         isLoading = false,
+                                         onLoadingChange
+}: MarketSearchProps) {
+    const [nameIdMap, setNameIdMap] = useState<NameIdMap>({});
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [selected, setSelected] = useState<{ name: string; id: number } | null>(null);
-    const [isUserSearch, setIsUserSearch] = useState(false);
-    const [hasInitialized, setHasInitialized] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const initialData: SearchData = { itemID: null, info: null };
-    const [state, formAction] = useActionState(
-        fetchItemID as (prevState: SearchData, formData: FormData) => Promise<SearchData>,
-        initialData
-    );
+    const [error, setError] = useState<string | null>(null);
 
     const formRef = useRef<HTMLFormElement>(null);
-    const hasProcessedInitialItem = useRef(false);
+    const hasInitialized = useRef(false);
 
-    // on page load fetch item data once
+    // Load name-ID mapping on mount
     useEffect(() => {
-        if (hasInitialized) return;
+        if (hasInitialized.current) return;
 
         fetch('/name_id_map.json')
             .then(res => res.json())
-            .then(mapData => {
-                setData(mapData);
-                setHasInitialized(true);
-            })
-            .catch(err => {
-                console.error('Failed to load item data:', err);
-                setHasInitialized(true);
-            });
-    }, [hasInitialized]);
+            .then(setNameIdMap)
+            .catch(err => console.error('Failed to load item data:', err))
+            .finally(() => { hasInitialized.current = true; });
+    }, []);
 
     // Handle initial item ID from URL
     useEffect(() => {
-        if (
-            hasInitialized &&
-            initialItemId &&
-            data &&
-            Object.keys(data).length > 0 &&
-            !hasProcessedInitialItem.current &&
-            !isSubmitting &&
-            !isLoading
-        ) {
-            const itemName = Object.keys(data).find(name => data[name].toString() === initialItemId);
-            if (itemName) {
-                setQuery(itemName);
-                setSelected({ name: itemName, id: parseInt(initialItemId) });
-                hasProcessedInitialItem.current = true;
-            }
+        if (!hasInitialized.current || !initialItemId || !nameIdMap || Object.keys(nameIdMap).length === 0) {
+            return;
         }
-    }, [initialItemId, data, hasInitialized, isSubmitting, isLoading]);
 
-    // Handle state updates
-    useEffect(() => {
-        if (state.info || state.error) {
-            setIsSubmitting(false);
+        const itemName = Object.keys(nameIdMap).find(name =>
+            nameIdMap[name].toString() === initialItemId
+        );
 
-            // Only notify parent if it was a user-initiated search
-            if (isUserSearch || !hasProcessedInitialItem.current) {
-                onSearchResults(state.info, state.itemID);
-            }
-
-            // Only clear if it was a user-initiated search and was successful
-            if (state.info && !state.error && isUserSearch) {
-                setTimeout(() => {
-                    setQuery('');
-                    setSelected(null);
-                    setSuggestions([]);
-                    setIsUserSearch(false);
-                }, 800);
-            }
+        if (itemName) {
+            setQuery(itemName);
+            setSelected({ name: itemName, id: parseInt(initialItemId) });
         }
-    }, [state.info, state.error, state.itemID, onSearchResults, isUserSearch]);
+    }, [initialItemId, nameIdMap]);
 
-
-    // Suggestion / autocomplete handler
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    // Handle input changes and generate suggestions
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setQuery(value);
 
@@ -106,46 +66,80 @@ export default function MarketSearch({ onSearchResults, initialItemId, isLoading
             return;
         }
 
-        const matches = Object.keys(data).filter(name =>
-            name.toLowerCase().includes(value.toLowerCase())
+        const matches = Object.keys(nameIdMap).filter(name =>
+            name.toLowerCase().startsWith(value.toLowerCase())
         );
         setSuggestions(matches.slice(0, 10));
-    };
+    }, [nameIdMap]);
 
-    // Prevent submissions (after item is selected)
-    const handleSelect = (name: string) => {
-        // Prevent submission if already submitting or if parent is loading
-        if (isSubmitting || isLoading) return;
+    // Handle suggestion selection
+    const handleSelect = useCallback((name: string) => {
+        if (isLoading) {
+            return;
+        }
 
         setQuery(name);
-        setSelected({ name, id: data[name] });
+        setSelected({ name, id: nameIdMap[name] });
         setSuggestions([]);
-        setIsUserSearch(true);
-        setIsSubmitting(true);
+        setError(null);
+        onLoadingChange?.(true);
 
-        // Use requestAnimationFrame to ensure we're not in the middle of a render
-        requestAnimationFrame(() => {
-            if (formRef.current) {
-                formRef.current.requestSubmit();
+        setTimeout(() => {
+            formRef.current?.requestSubmit();
+        }, 100);
+    }, [nameIdMap, isLoading, onLoadingChange]);
+
+    // Form action handler
+    const handleFormAction = useCallback(async (formData: FormData) => {
+        if (!selected?.id) {
+            setError('No item selected');
+            onLoadingChange?.(false);
+            return;
+        }
+
+        try {
+            setError(null);
+
+            // Actually await the API call result
+            const result = await fetchItemID({} as SearchData, formData);
+
+            if (result.error) {
+                setError(result.error);
+                onSearchResults(null, null);
+            } else {
+                onSearchResults(result.info, result.itemID);
             }
-        });
-    };
+        } catch (err) {
+            setError('Search failed. Please try again.');
+            console.error('Search error:', err);
+        } finally {
+            onLoadingChange?.(false);
+        }
+    }, [onSearchResults, selected]);
 
+    const handleInputFocus = useCallback(() => {
+        setQuery('');
+        setSelected(null);
+        setSuggestions([]);
+        setError(null);
+;
+    }, [onSearchResults]);
 
     return (
         <div className="w-96 mx-auto">
             <Form
-                action={formAction}
+                action={handleFormAction}
                 ref={formRef}
                 className="relative"
             >
                     <input
                         type="text"
                         value={query}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
+                        onFocus={handleInputFocus}
                         placeholder="Search in the Grand Exchange..."
                         className="w-full h-12 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        disabled={isLoading || isSubmitting}
+                        disabled={isLoading}
                     />
                         {suggestions.length > 0 && (
                             <ul className="absolute top-full left-0 right-0 mt-1
@@ -170,12 +164,10 @@ export default function MarketSearch({ onSearchResults, initialItemId, isLoading
 
                     <input type="hidden" name="itemID" value={selected?.id ?? ''} />
 
-                    {state.error && (
-                        <div className="text-red-500">{state.error}</div>
-                    )}
-
-                    {(isLoading || isSubmitting) && (
-                        <div className="text-blue-500 mt-2">Loading item data...</div>
+                    {error && (
+                        <div style={{ color: 'red', marginTop: '8px' }}>
+                            {error}
+                        </div>
                     )}
 
             </Form>

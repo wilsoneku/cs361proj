@@ -1,7 +1,7 @@
 'use client'
 
 import React, {useState, useEffect} from "react";
-import xpTable from "@/app/ui/user-search/xp-table";
+import xpTable from "@/app/ui/skills/user-search/xp-table";
 import {DisplayXpProps} from "@/app/lib/types";
 
 

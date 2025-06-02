@@ -1,8 +1,8 @@
 'use client'
 import {useState} from "react";
 
-import UserSearch from "@/app/ui/user-search/user-search";
-import DisplayXp from "@/app/ui/user-search/display-xp";
+import UserSearch from "@/app/ui/skills/user-search/user-search";
+import DisplayXp from "@/app/ui/skills/user-search/display-xp";
 import CraftingTable from "@/app/ui/skills/tables/crafting-table";
 
 import {SkillInfo} from "@/app/lib/types"

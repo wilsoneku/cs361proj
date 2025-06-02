@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {useState, useEffect, useMemo, useRef} from 'react';
 import { StarIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import {fetchTableData} from '@/app/ui/skills/tables/table-load-actions';
@@ -27,6 +27,8 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
+    const hasLoadedBefore = useRef(false);
+
     // Load base table-helpers methods data when component mounts
     useEffect(() => {
         loadBaseCraftingData();
@@ -47,9 +49,9 @@ export default function CraftingTable({xpNeeded}: CraftingTableProps) {
 
     // Load market data when items change
     useEffect(() => {
-        if (items.length > 0) {
+        if (items.length > 0 && !hasLoadedBefore.current) {
             loadAllMarketData();
-            // compareBatchSpeed();
+            hasLoadedBefore.current = true;
         }
     }, [items]);
 

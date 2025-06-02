@@ -2,7 +2,7 @@
 import Form from 'next/form'
 import {useActionState, useEffect} from "react";
 
-import {userSearchActions} from "@/app/ui/user-search/user-search-actions";
+import {userSearchActions} from "@/app/ui/skills/user-search/user-search-actions";
 import {SkillInfo, UserSearchProps} from "@/app/lib/types";
 
 type SearchData = [string | null, string | null, SkillInfo | null] | null;

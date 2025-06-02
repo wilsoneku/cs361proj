@@ -139,12 +139,6 @@ export async function fetchItemID(prevState: SearchData, payload: FormData): Pro
                 itemID: itemID.toString(),
                 info: null,
                 error: "Failed to fetch market data",
-                timing: {
-                    total_time: apiTiming.total_time,
-                    api_call_time: apiTiming.api_call_time,
-                    processing_time: 0,
-                    function_name: 'submitItemID_error'
-                }
             };
         }
 
@@ -172,13 +166,11 @@ export async function fetchItemID(prevState: SearchData, payload: FormData): Pro
                 itemID: itemID.toString(),
                 info: null,
                 error: "Item not found",
-                timing: overallTiming
             };
         }
         return {
             itemID: itemID.toString(),
             info: itemInfo,
-            timing: overallTiming
         };
 
     } catch (error) {

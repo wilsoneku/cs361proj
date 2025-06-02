@@ -1,50 +1,45 @@
 'use client'
-import React, {useState, useEffect, useRef} from 'react';
+
+import React, {useState, useEffect, useCallback, Suspense} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MarketSearch from "@/app/ui/market/market-search";
 import ItemDisplay from "@/app/ui/market/item-display";
-import {fetchItemID} from "@/app/ui/market/market-search-actions";
-import {NavigateOptions} from "next/dist/shared/lib/app-router-context.shared-runtime";
-import {ItemInfo} from "@/app/lib/types";
+import { fetchItemID } from "@/app/ui/market/market-search-actions";
+import { ItemInfo } from "@/app/lib/types";
 
-export default function Page(href: string, options?: NavigateOptions) {
+export default function Page() {
     const router = useRouter();
-    const processedItemRef = useRef<string | null>(null);
-
     const [itemCache, setItemCache] = useState<Map<string, ItemInfo>>(new Map());
+
     const searchParams = useSearchParams();
     const [searchResults, setSearchResults] = useState<ItemInfo | null>(null);
-    const [currentItemId, setCurrentItemId] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
 
+    const [isLoading, setIsLoading] = useState(false);
     const itemIdFromUrl = searchParams.get('item');
 
-    const fetchItemDataFromUrl = async (itemId: string) => {
-        // Skip if already processing this item
-        if (processedItemRef.current === itemId || isLoading) return;
-        processedItemRef.current = itemId;
-        setIsLoading(true);
+    const handleLoadingChange = useCallback((loading: boolean) => {
+        setIsLoading(loading);
+    }, []);
 
+    // Consolidated fetch function
+    const fetchItemData = useCallback(async (itemId: string) => {
+        if (!itemId || isLoading) return;
+        // Check cache first
         if (itemCache.has(itemId)) {
             setSearchResults(itemCache.get(itemId)!);
-            setIsLoading(false);
-
             return;
         }
 
+        setIsLoading(true);
         try {
-            // Create FormData to match your server action signature
             const formData = new FormData();
             formData.append('itemID', itemId);
 
-            // Get data from API-intermediate
             const result = await fetchItemID({ itemID: null, info: null }, formData);
 
             if (result.info && !result.error) {
-                if (result.info) {
-                    setItemCache(prev => new Map(prev).set(itemId, result.info as ItemInfo));
-                    setSearchResults(result.info);
-                }
+                setItemCache(prev => new Map(prev).set(itemId, result.info as ItemInfo));
+                setSearchResults(result.info);
             } else {
                 console.error('Error from server action:', result.error);
                 setSearchResults(null);
@@ -55,44 +50,27 @@ export default function Page(href: string, options?: NavigateOptions) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [itemCache, isLoading]);
 
-    // Update current item ID and fetch data when URL changes
+    // Single useEffect to handle URL changes
     useEffect(() => {
-        if (!itemIdFromUrl) {
-            setCurrentItemId(null);
+        if (itemIdFromUrl) {
+            fetchItemData(itemIdFromUrl);
+        } else {
             setSearchResults(null);
-            processedItemRef.current = null;
-            return;
         }
+    }, [itemIdFromUrl, fetchItemData]);
 
-        // Skip if item already processed
-        if (itemIdFromUrl === currentItemId || processedItemRef.current === itemIdFromUrl) {
-            return;
-        }
-
-        setCurrentItemId(itemIdFromUrl);
-        fetchItemDataFromUrl(itemIdFromUrl);
-
-    }, [itemIdFromUrl]);
-
-
-    const handleSearchResults = (results: ItemInfo | null, itemId: string | null) => {
-        // Don't update state or URL if item is already loaded
-        if (itemId === currentItemId) return;
-
+    // Simplified search results handler
+    const handleSearchResults = useCallback((results: ItemInfo | null, itemId: string | null) => {
         setSearchResults(results);
 
-        if (itemId && itemId !== itemIdFromUrl && !isLoading) {
-            processedItemRef.current = itemId;
+        if (itemId && itemId !== itemIdFromUrl) {
             router.push(`/market?item=${itemId}`);
         } else if (!itemId && itemIdFromUrl) {
-            processedItemRef.current = null;
             router.push('/market');
         }
-    };
-
-
+    }, [itemIdFromUrl, router]);
 
     return(
         <div className="min-h-screen ">
@@ -103,12 +81,18 @@ export default function Page(href: string, options?: NavigateOptions) {
 
                 <MarketSearch
                     onSearchResults={handleSearchResults}
-                    initialItemId={currentItemId}
+                    initialItemId={itemIdFromUrl}
+                    isLoading={isLoading}
+                    onLoadingChange={handleLoadingChange}
                 />
+
                 <ItemDisplay
                     itemInfo={searchResults}
-                    itemId={currentItemId}
+                    itemId={itemIdFromUrl}
+                    isLoading={isLoading}
                 />
+
+
             </div>
         </div>
 
